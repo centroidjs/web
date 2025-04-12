@@ -2,20 +2,23 @@
     "compilerOptions": {
         "baseUrl": ".",
         "skipLibCheck": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "declarationMap": true,
-        "declarationDir": ".",
         "declaration": true,
-        "removeComments": false,
-        "noImplicitAny": true,
+        "target": "esnext",
         "moduleResolution": "node",
-        "module": "ESNext",
-        "target": "es5",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": true,
+        "outDir": "./dist",
         "paths": {
-            "@centroid.js/web/core": [
-                "../core/src/index"
+            "@centroidjs/web/router": [
+                "../router/src/index"
+            ],
+            "@centroidjs/web/platform-server": [
+                "src/index"
+            ],
+            "@centroidjs/web": [
+                "../src/index"
             ]
         }
     },

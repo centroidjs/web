@@ -1,5 +1,5 @@
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
-import {HttpContextBase} from '@centroid.js/web/core';
+import {HttpContextBase} from '@centroidjs/web';
 import { HttpResult } from './HttpResult';
 import { PassThrough, Stream } from 'stream';
 
@@ -15,14 +15,14 @@ function bufferToStream(input: Buffer | Stream) {
 
 export class HttpContentResult extends HttpResult {
 
-    public contentType: string = 'text/html';
-    public contentEncoding: string = 'utf8';
+    public contentType = 'text/html';
+    public contentEncoding = 'utf8';
 
-    constructor(public content: any) {
+    constructor(public content: Buffer | Stream | string) {
         super();
     }
 
-    async execute(context: HttpContextBase): Promise<any> {
+    async execute(context: HttpContextBase): Promise<void> {
         if (this.content == null) {
             context.response.writeHead(this.status || 204);
             return;
@@ -31,7 +31,8 @@ export class HttpContentResult extends HttpResult {
         context.response.writeHead(this.status || 200, { 'Content-Type': this.contentType });
         if (this.contentEncoding === 'binary') {
             return await new Promise<void>((resolve, reject) => {
-                const source = bufferToStream(this.content);
+                const buffer = typeof this.content === 'string' ? Buffer.from(this.content) : this.content;
+                const source = bufferToStream(buffer);
                 source.on('end', () => {
                     return resolve();
                 });

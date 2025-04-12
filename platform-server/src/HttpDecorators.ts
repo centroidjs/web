@@ -1,9 +1,10 @@
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
-import {TraceUtils, LangUtils, HttpBadRequestError, HttpUnauthorizedError, Args} from '@themost/common';
+import {LangUtils, HttpBadRequestError, HttpUnauthorizedError} from '@themost/common';
 import {HttpConsumer} from './HttpConsumer';
 import {DataTypeValidator, MinLengthValidator, MaxLengthValidator,
-MinValueValidator, MaxValueValidator, RequiredValidator, PatternValidator} from '@themost/data';
-import {HttpRouteConfig} from '@centroid.js/web/core';
+MinValueValidator, MaxValueValidator, RequiredValidator, PatternValidator } from '@themost/data';
+import {HttpContextBase} from '@centroidjs/web';
+import {HttpRouteConfig} from '@centroidjs/web/router';
 
 class DecoratorError extends Error {
     constructor(msg?: string) {
@@ -11,13 +12,13 @@ class DecoratorError extends Error {
     }
 }
 
-declare interface HttpControllerAnnotation extends Function {
+declare interface HttpControllerAnnotation {
     httpController: { name: string };
 }
 
 function httpController(name: string): ClassDecorator {
-    return (target: any) => {
-        Args.check(typeof target === 'function', new DecoratorError());
+    return (target: unknown) => {
+        if (typeof target !== 'function') { throw new DecoratorError() };
         // define controller name
         Object.defineProperty(target, 'httpController', {
             value: {
@@ -40,16 +41,21 @@ declare interface HttpControllerMethodDeclaration {
     httpOptions?: boolean;
 }
 
-declare interface HttpControllerMethodAnnotation extends HttpControllerMethodDeclaration, Function {
-
+declare interface HttpControllerMethodAnnotation extends HttpControllerMethodDeclaration {
+    httpAction?: string;
+    httpParams?: Record<string, HttpParamAttributeOptions>;
+    httpParamAlias?: Record<string, string>;
+    authorize?: HttpConsumer;
+    httpRoute?: HttpRouteConfig;
+    httpRouteIndex?: number;
 }
 
 declare interface HttpParamAttributeOptions {
     name: string;
     type?: string;
     pattern?: RegExp|string;
-    minValue?: any;
-    maxValue?: any;
+    minValue?: number | Date;
+    maxValue?: number | Date;
     minLength?: number;
     maxLength?: number;
     required?: boolean;
@@ -58,7 +64,7 @@ declare interface HttpParamAttributeOptions {
 
 function httpMethod(method: HttpControllerMethodDeclaration,
     extras?: { name?: string, params?: HttpParamAttributeOptions[] }) {
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value === 'function') {
             Object.assign(descriptor.value, method);
             if (extras) {
@@ -81,11 +87,10 @@ function httpGet(extras?: { name?: string, params?: HttpParamAttributeOptions[] 
         httpHead: true
     }, extras);
 }
-/**
- * @returns {Function}
- */
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function httpAny(extras?: { name?: string, params?: HttpParamAttributeOptions[] }) {
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value === 'function') {
             descriptor.value.httpGet = true;
             descriptor.value.httpPost = true;
@@ -147,7 +152,7 @@ function httpAction(name: string) {
     if (typeof name !== 'string') {
         throw new TypeError('Action name must be a string');
     }
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value !== 'function') {
             throw new Error('Decorator is not valid on this declaration type.');
         }
@@ -155,12 +160,7 @@ function httpAction(name: string) {
         return descriptor;
     }
 }
-/**
- *
- * @param {string} name
- * @param {string} alias
- * @returns {Function}
- */
+
 function httpParamAlias(name: string, alias: string) {
     if (typeof name !== 'string') {
         throw new TypeError('Parameter name must be a string');
@@ -168,7 +168,7 @@ function httpParamAlias(name: string, alias: string) {
     if (typeof alias !== 'string') {
         throw new TypeError('Parameter alias must be a string');
     }
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value !== 'function') {
             throw new Error('Decorator is not valid on this declaration type.');
         }
@@ -178,14 +178,10 @@ function httpParamAlias(name: string, alias: string) {
     }
 }
 
-/**
- * @param {HttpParamAttributeOptions|*=} options
- * @returns {Function}
- */
 function httpParam(options: HttpParamAttributeOptions) {
     if (typeof options !== 'object') { throw new TypeError('Parameter options must be an object'); }
     if (typeof options.name !== 'string') { throw new TypeError('Parameter name must be a string'); }
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value !== 'function') {
             throw new Error('Decorator is not valid on this declaration type.');
         }
@@ -193,15 +189,9 @@ function httpParam(options: HttpParamAttributeOptions) {
         descriptor.value.httpParams = descriptor.value.httpParams || { };
         descriptor.value.httpParams[options.name] = Object.assign({'type':'Text'}, options);
         if (typeof descriptor.value.httpParam === 'undefined') {
-            descriptor.value.httpParam = new HttpConsumer( (context) => {
-                const httpParamValidationFailedCallback = (thisContext: any, thisParam: any, validationResult: any) => {
-                    TraceUtils.error(JSON.stringify(Object.assign(validationResult, {
-                        param : thisParam,
-                        request : {
-                            url: thisContext.request.url,
-                            method: thisContext.request.method
-                        }
-                    })));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            descriptor.value.httpParam = new HttpConsumer( (context: any) => {
+                const httpParamValidationFailedCallback = (thisContext: HttpContextBase, thisParam: HttpParamAttributeOptions, validationResult: { message: string, innerMessage?: string }) => {
                     return Promise.reject(new HttpBadRequestError('Bad request parameter', thisParam.message || validationResult.message));
                 };
                 const methodParams = LangUtils.getFunctionParams(descriptor.value);
@@ -301,7 +291,7 @@ function httpParam(options: HttpParamAttributeOptions) {
 }
 
 function httpAuthorize(value?: boolean) {
-    return (target: any, key: any, descriptor: any) => {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value !== 'function') {
             throw new Error('Decorator is not valid on this declaration type.');
         }
@@ -310,7 +300,7 @@ function httpAuthorize(value?: boolean) {
             authorize = value;
         }
         if (authorize) {
-            descriptor.value.authorize = new HttpConsumer( (context) => {
+            descriptor.value.authorize = new HttpConsumer( (context: HttpContextBase) => {
                 if (context.user && context.user.name !== 'anonymous') {
                     return Promise.resolve();
                 }
@@ -321,13 +311,8 @@ function httpAuthorize(value?: boolean) {
     };
 }
 
-/**
- * @param {string} name
- * @param {Function|HttpConsumer} consumer
- * @returns {Function}
- */
-function httpActionConsumer(name: string, consumer: any) {
-    return (target: any, key: any, descriptor: any) => {
+function httpActionConsumer(name: string, consumer: (this: HttpContextBase,...args: unknown[]) => Promise<unknown>) {
+    return (target: unknown, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value !== 'function') {
             throw new Error('Decorator is not valid on this declaration type.');
         }
@@ -350,7 +335,7 @@ function httpActionConsumer(name: string, consumer: any) {
  * Defines an http route that is going to be registered by an http controller
  */
 function httpRoute(url: string, index?: number) {
-    return (target: any, key: any, descriptor: any) => {
+    return (target: { name: string, httpControllerName: string }, key: string, descriptor: PropertyDescriptor) => {
         if (typeof descriptor.value === 'function') {
             Object.defineProperty(descriptor.value, 'httpRoute', {
                 get () {

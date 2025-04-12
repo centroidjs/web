@@ -2,13 +2,10 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "paths": {
-            "@centroidjs/web/router": [
-                "../router/dist/index"
-            ],
             "@centroidjs/web": [
                 "../dist/index"
             ]
-        } // (build) don't use paths provided by the root tsconfig
+        } // (build) don't use paths provided by tsconfig.json
     },
     "include": [
         "src"

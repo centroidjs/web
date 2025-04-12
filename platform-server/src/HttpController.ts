@@ -7,16 +7,14 @@ import { HttpRedirectResult } from './HttpRedirectResult';
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
 class HttpController {
     public context: HttpContext;
-    [k: string]: any;
-    constructor() {
-        //
-    }
+    [k: string]: unknown;
+    
 
-    json(data: any) {
+    json(data: Record<string, unknown>) {
         return new HttpJsonResult(data);
     }
 
-    xml(data: any) {
+    xml(data: Record<string, unknown>) {
         return new HttpXmlResult(data);
     }
 

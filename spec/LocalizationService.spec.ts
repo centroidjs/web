@@ -1,5 +1,5 @@
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
-import {HttpApplication, I18nLocalizationService} from '@centroid.js/web/platform-server';
+import {HttpApplication, I18nLocalizationService} from '@centroidjs/web/platform-server';
 
 describe('HttpApplication', () => {
 
@@ -11,14 +11,16 @@ describe('HttpApplication', () => {
 
     it('should LocalizationService.set()', () => {
         const app = new HttpApplication();
-        app.configuration.setSourceAt('settings/i18n', {
-            staticCatalog: {
-                en: {
-                },
-                fr: {
+        app.configuration.instant.settings = {
+            i18n: {
+                staticCatalog: {
+                    en: {
+                    },
+                    fr: {
+                    }
                 }
             }
-        });
+        }
         const service = new I18nLocalizationService(app);
         service.set('en', {
             'HelloMessage': 'Hello World'

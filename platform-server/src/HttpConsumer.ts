@@ -1,8 +1,8 @@
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
-import {HttpContextBase} from '@centroid.js/web/core';
+import {HttpContextBase} from '@centroidjs/web';
 
 export class HttpConsumer {
-    constructor(public callable: (this: HttpContextBase,...args: any[]) => Promise<any>) {
+    constructor(public callable: (...args: unknown[]) => Promise<unknown>) {
         //
     }
 
@@ -11,7 +11,7 @@ export class HttpConsumer {
      * @param {HttpContextBase} context
      * @param {...*} args
      */
-    run(context: HttpContextBase, ...args: any[]): Promise<any> {
+    run(context: HttpContextBase, ...args: unknown[]): Promise<unknown> {
         return this.callable.apply(context, args);
     }
 }

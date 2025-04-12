@@ -1,7 +1,7 @@
-import {HttpApplication, HttpConsumer, HttpContext} from '@centroid.js/web/platform-server';
+import {HttpApplication, HttpConsumer, HttpContext} from '@centroidjs/web/platform-server';
 describe('HttpConsumer', () => {
     it('should create instance', async () => {
-        const consumer = new HttpConsumer(function(value: any) {
+        const consumer = new HttpConsumer(function(value: unknown) {
             expect(this).toBeInstanceOf(HttpContext);
             return Promise.resolve(value);
         });

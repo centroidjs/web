@@ -2,17 +2,14 @@
     "compilerOptions": {
         "baseUrl": ".",
         "skipLibCheck": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "declarationMap": true,
-        "declarationDir": ".",
         "declaration": true,
-        "removeComments": false,
-        "noImplicitAny": true,
+        "target": "esnext",
         "moduleResolution": "node",
-        "module": "ESNext",
-        "target": "es5",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "noImplicitAny": true,
+        "outDir": "./dist",
         "lib": [
             "es2015",
             "es2016",
@@ -20,6 +17,9 @@
             "dom"
           ],
         "paths": {
+            "@centroidjs/core": [
+                "../../core/src/index"
+            ]
         }
     },
     "include": [

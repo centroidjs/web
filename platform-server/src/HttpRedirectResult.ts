@@ -1,5 +1,5 @@
 import { HttpResult } from './HttpResult';
-import { HttpContextBase } from '@centroid.js/web/core';
+import { HttpContextBase } from '@centroidjs/web';
 
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
 

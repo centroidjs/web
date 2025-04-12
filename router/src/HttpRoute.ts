@@ -1,6 +1,6 @@
-// MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
+// MOST Web Framework Codename ZeroGravity, copyright 2017-2025 THEMOST LP all rights reserved
 
-export const HTTP_ROUTE_PATTERNS: Map<string, any> = new Map([
+const HTTP_ROUTE_PATTERNS: [string, () => string][] = [
     ['int', () => {
         return '^[1-9]([0-9]*)$';
     }],
@@ -22,51 +22,107 @@ export const HTTP_ROUTE_PATTERNS: Map<string, any> = new Map([
     ['date', () => {
         return '^(datetime)?\'\\d{4}-([0]\\d|1[0-2])-([0-2]\\d|3[01])(?:[T ](\\d+):(\\d+)(?::(\\d+)(?:\\.(\\d+))?)?)?(?:Z(-?\\d*))?([+-](\\d+):(\\d+))?\'$';
     }]
-]);
+];
 
+/**
+ * Represents a parameter in an HTTP route.
+ * 
+ * @interface HttpRouteParameter
+ * 
+ * @property {string} name - The name of the parameter.
+ * @property {RegExp} [pattern] - An optional regular expression pattern that the parameter value must match.
+ * @property {unknown} [parser] - An optional parser function to process the parameter value.
+ * @property {unknown} [value] - An optional value for the parameter.
+ */
 declare interface HttpRouteParameter {
     name: string;
     pattern?: RegExp;
-    parser?: any;
-    value?: any;
+    parser?: unknown;
+    value?: unknown;
 }
 
-export declare interface HttpRouteConfig {
+/**
+ * Configuration interface for defining an HTTP route.
+ * 
+ * @interface HttpRouteConfig
+ * 
+ * @property {string} path - The URL path for the route.
+ * @property {number} [index] - Optional index to specify the order of the route.
+ * @property {unknown} [controller] - Optional controller associated with the route.
+ * @property {string} [action] - Optional action to be performed for the route.
+ */
+declare interface HttpRouteConfig {
     path: string;
     index?: number;
-    controller?: any;
+    controller?: unknown;
     action?: string;
 }
 
-export const HTTP_ROUTE_PARSERS: Map<string, any> = new Map([
-    ['int', (value: any) => {
-        return parseInt(value, 10);
+const HTTP_ROUTE_PARSERS: [string, (value: unknown) => unknown][] = [
+    ['int', (value: unknown) => {
+        return parseInt(value as string, 10);
     }],
-    ['boolean', (value: any) => {
-        return /^true$/ig.test(value);
+    ['boolean', (value: unknown) => {
+        return /^true$/ig.test(value as string);
     }],
-    ['decimal', (value: any) => {
-        return parseFloat(value);
+    ['decimal', (value: unknown) => {
+        return parseFloat(value as string);
     }],
-    ['float', (value: any) => {
-        return parseFloat(value);
+    ['float', (value: unknown) => {
+        return parseFloat(value as string);
     }],
-    ['string', (value: any) => {
+    ['string', (value: string) => {
         return value.replace(/^'/,'').replace(/'$/,'');
     }],
-    ['date', (value: any) => {
+    ['date', (value: string) => {
         return new Date(Date.parse(value.replace(/^(datetime)?'/,'').replace(/'$/,'')));
     }]
 
-]);
+];
 
-export class HttpRoute {
+/**
+ * Represents an HTTP route configuration and matching logic.
+ */
+class HttpRoute {
 
-    public params: any = {};
+    /**
+     * Parameters extracted from the matched route.
+     */
+    public params: Record<string, unknown> = {};
 
-    constructor(public routeConfig?: HttpRouteConfig) {
-    }
+    /**
+     * A map of route patterns to their corresponding string representations.
+     */
+    protected routePatterns = new Map<string, () => string>(HTTP_ROUTE_PATTERNS);
 
+    /**
+     * A map of route parsers to their corresponding parsing functions.
+     */
+    protected routeParsers = new Map<string, (value: unknown) => unknown>(HTTP_ROUTE_PARSERS);
+
+    /**
+     * Initializes a new instance of the `HttpRoute` class.
+     *
+     * @param routeConfig - The configuration for the route.
+     */
+    constructor(public routeConfig?: HttpRouteConfig) {}
+
+    /**
+     * Checks if the given URL matches the route configuration.
+     *
+     * @param urlToMatch - The URL to match against the route configuration.
+     * @returns `true` if the URL matches the route configuration, otherwise `false`.
+     * @throws {Error} If the route configuration is null.
+     *
+     * The method performs the following steps:
+     * 1. Validates the input URL and route configuration.
+     * 2. Extracts the path from the URL, ignoring query parameters.
+     * 3. Parses the route configuration to identify route parameters and their patterns.
+     * 4. Constructs a regular expression to match the URL against the route configuration.
+     * 5. Validates the URL against the constructed regular expression and route parameter patterns.
+     * 6. Decodes and assigns matched route parameters to the `params` property.
+     * 7. Sets the `controller` and `action` properties in `params` if defined in the route configuration.
+     */
     isMatch(urlToMatch: string) {
         if (this.routeConfig == null) {
             throw new Error('Route may not be null');
@@ -96,10 +152,10 @@ export class HttpRoute {
                 // common expressions
                 patternMatch = match[3];
                 parser = null;
-                if (HTTP_ROUTE_PATTERNS.has(match[3])) {
-                    patternMatch = HTTP_ROUTE_PATTERNS.get(match[3])();
-                    if (HTTP_ROUTE_PARSERS.has(match[3])) {
-                        parser = HTTP_ROUTE_PARSERS.get(match[3]);
+                if (this.routePatterns.has(match[3])) {
+                    patternMatch = this.routePatterns.get(match[3])();
+                    if (this.routeParsers.has(match[3])) {
+                        parser = this.routeParsers.get(match[3]);
                     }
                 }
                 routeParams.push({
@@ -115,10 +171,8 @@ export class HttpRoute {
             }
             match = re.exec(this.routeConfig.path);
         }
-        let str;
-        let matcher;
-        str = this.routeConfig.path.replace(re, '([\\$_\\-.:\',+=%0-9\\w-]+)');
-        matcher = new RegExp('^' + str + '$', 'ig');
+        const str = this.routeConfig.path.replace(re, '([\\$_\\-.:\',+=%0-9\\w-]+)');
+        const matcher = new RegExp('^' + str + '$', 'ig');
         match = matcher.exec(str1);
         if (typeof match === 'undefined' || match === null) {
             return false;
@@ -170,4 +224,12 @@ export class HttpRoute {
         return true;
     }
 
+}
+
+export {
+    HTTP_ROUTE_PATTERNS,
+    HTTP_ROUTE_PARSERS,
+    HttpRoute,
+    HttpRouteConfig,
+    HttpRouteParameter
 }

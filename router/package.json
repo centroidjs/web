@@ -4,6 +4,9 @@
     "module": "dist/index.esm.js",
     "types": "dist/index.d.ts",
     "type": "module",
+    "scripts": {
+        "build": "rimraf dist && rollup -c ./rollup.config.cjs"
+    },
     "dependencies": {},
     "devDependencies": {},
     "peerDependencies": {}

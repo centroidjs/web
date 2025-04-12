@@ -2,7 +2,9 @@
 node_modules
 .gitignore
 rollup.config.js
+rollup.config.cjs
 tsconfig.json
+tsconfig.lib.json
 
 # test
 .env

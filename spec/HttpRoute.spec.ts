@@ -1,5 +1,5 @@
 
-import {HttpRoute} from '@centroid.js/web/core';
+import {HttpRoute} from '@centroidjs/web/router';
 
 describe('HttpRoute', () => {
 
@@ -101,11 +101,9 @@ describe('HttpRoute', () => {
         isMatch = route.isMatch('/utils/calculateAge(\'2000-04-23T12:00:00Z\')')
         expect(isMatch).toBeTruthy();
         expect(route.params.value).toEqual(new Date('2000-04-23T12:00:00Z'));
-        // tslint:disable-next-line quotemark
         isMatch = route.isMatch("/utils/calculateAge(datetime'2000-04-23T12:00:00Z')")
         expect(isMatch).toBeTruthy();
         expect(route.params.value).toEqual(new Date('2000-04-23T12:00:00Z'));
-        // tslint:disable-next-line quotemark
         isMatch = route.isMatch("/utils/calculateAge('2000-04-23T12:00:00.000+03:00')")
         expect(isMatch).toBeTruthy();
         expect(route.params.value).toEqual(new Date('2000-04-23 12:00:00+03:00'));

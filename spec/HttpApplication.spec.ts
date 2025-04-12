@@ -1,22 +1,15 @@
 // MOST Web Framework Codename ZeroGravity, copyright 2017-2020 THEMOST LP all rights reserved
-import {HttpApplication} from '@centroid.js/web/platform-server';
-import { ApplicationService, ApplicationBase } from '@themost/common';
+import {HttpApplication} from '@centroidjs/web/platform-server';
+import { ApplicationService } from '@centroidjs/core';
 
 class SampleService extends ApplicationService {
-    constructor(app: ApplicationBase) {
-        super(app);
-    }
-
     getMessage() {
         return 'Hello World';
     }
 }
 
 class SampleStrategy extends SampleService {
-    constructor(app: ApplicationBase) {
-        super(app);
-    }
-
+    
     getMessage() {
         return 'Hello World!';
     }
@@ -53,7 +46,7 @@ describe('HttpApplication', () => {
 
     it('should use HttpApplication.useStrategy()', () => {
         const app = new HttpApplication();
-        app.useStrategy(SampleService, SampleStrategy);
+        app.useService(SampleService, SampleStrategy);
         expect(app.hasService(SampleService)).toBeTruthy();
         const service = app.getService(SampleService);
         expect(service).toBeInstanceOf(SampleStrategy);
